@@ -1,0 +1,58 @@
+#!/bin/bash
+source config.cfg
+source ./docker/env/logger.sh
+
+
+log INFO "*** Setting up ports script strted"
+
+# import the configuration
+
+###### SSH #########
+log INFO "*** Starting SSH ports connection"
+log INFO "****** got configuration:"
+log INFO "****** DEVICE_PORT_SSH is $DEVICE_PORT_SSH"
+log INFO "****** HOST_PORT_SSH is $HOST_PORT_SSH"
+log INFO "****** DOCKER_PORT_SSH is $DOCKER_PORT_SSH"
+log INFO "*** Killing existing connections"
+P=$HOST_PORT_SSH
+kill $(netstat -vanp tcp | grep $P | awk "/\\.$P/ {print \$9}")
+P=$DOCKER_PORT_SSH
+kill $(netstat -vanp tcp | grep $P | awk "/\\.$P/ {print \$9}")
+log INFO "*** Setting up iproxy"
+iproxy $HOST_PORT_SSH $DEVICE_PORT_SSH &
+log INFO "*** Setting up socat"
+socat TCP-LISTEN:$DOCKER_PORT_SSH,fork TCP:localhost:$HOST_PORT_SSH &
+
+###### FRIDA #########
+log INFO "*** Starting Frida ports connection"
+log INFO "****** got configuration:"
+log INFO "****** DEVICE_PORT_FRIDA is $DEVICE_PORT_FRIDA"
+log INFO "****** HOST_PORT_FRIDA is $HOST_PORT_FRIDA"
+log INFO "****** DOCKER_PORT_FRIDA is $DOCKER_PORT_FRIDA"
+log INFO "*** Killing existing connections"
+P=$HOST_PORT_FRIDA
+kill $(netstat -vanp tcp | grep $P | awk "/\\.$P/ {print \$9}")
+P=$DOCKER_PORT_FRIDA
+kill $(netstat -vanp tcp | grep $P | awk "/\\.$P/ {print \$9}")
+log INFO "*** Setting up iproxy"
+iproxy $HOST_PORT_FRIDA $DEVICE_PORT_FRIDA &
+log INFO "*** Setting up socat"
+socat TCP-LISTEN:$DOCKER_PORT_FRIDA,fork TCP:localhost:$HOST_PORT_FRIDA &
+
+###### LLDB #########
+log INFO "*** Starting lldb ports connection"
+log INFO "****** got configuration:"
+log INFO "****** DEVICE_PORT_LLDB is $DEVICE_PORT_LLDB"
+log INFO "****** HOST_PORT_LLDB is $HOST_PORT_LLDB"
+log INFO "****** DOCKER_PORT_LLDB is $DOCKER_PORT_LLDB"
+log INFO "*** Killing existing connections"
+P=$HOST_PORT_LLDB
+kill $(netstat -vanp tcp | grep $P | awk "/\\.$P/ {print \$9}")
+P=$DOCKER_PORT_LLDB
+kill $(netstat -vanp tcp | grep $P | awk "/\\.$P/ {print \$9}")
+log INFO "*** Setting up iproxy"
+iproxy $HOST_PORT_LLDB $DEVICE_PORT_LLDB &
+log INFO "*** Setting up socat"
+socat TCP-LISTEN:$DOCKER_PORT_LLDB,fork TCP:localhost:$HOST_PORT_LLDB &
+
+

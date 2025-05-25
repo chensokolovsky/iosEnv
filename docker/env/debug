@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# This script runs a research tool, such as lldb or frida according to the provided configuration
+# This script location is inside the container.
+# The configuration files and research-specific scripts are on the host
+# This makes this script generic and not related to a specific research
+
+# Get the conf file
+source "./config.cfg"
+source "/env/logger.sh"
+
+# Get the input arg, which should be the conf file, or default to run.cfg
+if [ -n "$1" ]; then
+   RUN_CFG="/projects/$1"
+else
+   RUN_CFG="/projects/run.cfg"
+fi
+source $RUN_CFG
+
+
+#### define functions #####
+
+run_lldb() {
+  log INFO "Running lldb server"
+  if [ "$LLDB_WAITFOR" = "false" ]; then
+      if [[ -z "$1" ]]; then
+         log ERROR "Error!!! did not find PID"
+      fi
+
+     # Running lldb server by attaching to an aready running PID
+     log INFO "Attaching to pid: $1"
+     LLDB_COMMAND="$DEBUGSERVER_PATH localhost:$DEVICE_PORT_LLDB --attach=$1 &"
+  else
+      # Running lldb server by waiting for a process of a specific name from client
+     log INFO "Waiting for process named $EXEC_NAME for 6 seconds"
+     LLDB_COMMAND="$DEBUGSERVER_PATH localhost:$DEVICE_PORT_LLDB -waitfor $EXEC_NAME &"
+  fi
+     SSH_COMMAND_TO_RUN_LLDB_SERVER="ssh $MOBILE_USER@host.docker.internal -p $DOCKER_PORT_SSH \"$LLDB_COMMAND\" &"
+     log INFO "Runnind command to start lldb server: $SSH_COMMAND_TO_RUN_LLDB_SERVER"
+     eval $SSH_COMMAND_TO_RUN_LLDB_SERVER
+     log INFO "started lldbserver"
+
+   if [ "$LLDB_WAITFOR" = "false" ]; then
+      sleep 0.5
+   else
+      sleep 5.5
+   fi
+
+   # Creating lldbinit
+   log INFO "creating lldb init"
+   /env/generate_lldbinit /env/custom_lldbinit $DOCKER_PORT_LLDB /projects/$PROJECT_FOLDER/$EXEC_FOLDER/$LLDB_SCRIPT
+
+   sleep 0.5
+
+   # run lldb client
+   LLDB_CLIENT_COMMAND="lldb --source-before-file /env/custom_lldbinit"
+   log INFO "Running lldb client: $LLDB_CLIENT_COMMAND"
+   eval $LLDB_CLIENT_COMMAND
+
+}
+
+
+
+run_frida() {
+  log INFO "Running frida"
+  # Frida server should be running by cydia if installed properly
+  # So, just run frida and load the script
+
+  # Let's build the command
+  # Name of process to attach to
+  log INFO "Executable name is $EXEC_NAME"
+  # remote device address
+  log INFO "Will connect to device at host.docker.internal:$DOCKER_PORT_FRIDA"
+  # script to load
+  log INFO "will load script: /projects/$PROJECT_FOLDER/$EXEC_FOLDER/$FRIDA_SCRIPT"
+  # full command
+  FRIDA_COMMAND="frida -H host.docker.internal:$DOCKER_PORT_FRIDA -n $EXEC_NAME -l /projects/$PROJECT_FOLDER/$EXEC_FOLDER/$FRIDA_SCRIPT"
+  log INFO "will run command: $FRIDA_COMMAND"
+  eval $FRIDA_COMMAND
+
+  
+}
+
+
+run_frida_python() {
+  log INFO "Running frida python"
+
+  # Frida server should be running by cydia if installed properly
+  # We will run the python script using the docker's python
+
+  # The FRIDA_SCRIPT from the config should be a python file.
+  log INFO "Frida-python script is $FRIDA_SCRIPT"
+
+  # Command
+  FRIDA_PYTHON_COMMAND="python3 /projects/$PROJECT_FOLDER/$EXEC_FOLDER/$FRIDA_SCRIPT $EXEC_NAME host.docker.internal:$DOCKER_PORT_FRIDA"
+  log INFO "will run command: $FRIDA_PYTHON_COMMAND"
+  eval $FRIDA_PYTHON_COMMAND
+
+}
+
+
+main() {
+
+
+   log INFO "*** Got conf:"
+   log INFO "*** Project Folder: $PROJECT_FOLDER"
+   log INFO "*** Run Configuration: $RUN_CONF"
+
+   log INFO "calling source from /projects/$PROJECT_FOLDER/$RUN_CONF"
+   source "/projects/$PROJECT_FOLDER/$RUN_CONF"
+
+   log INFO "++++++ Executable name: $EXEC_NAME"
+
+   log INFO " ----- Getting PID -----"
+   log INFO "calling ssh with command: (ssh $MOBILE_USER@host.docker.internal -p $DOCKER_PORT_SSH ps -A) | grep $EXEC_NAME"
+   log INFO "---"
+   EXEC_PID=$((ssh $MOBILE_USER@host.docker.internal -p $DOCKER_PORT_SSH ps -A) | grep $EXEC_NAME | awk '{print $1}')
+   log INFO "PID is $EXEC_PID"
+
+   if [ "$TOOL" = "lldb" ]; then
+      log INFO "TOOL is lldb"
+      run_lldb $EXEC_PID
+   elif [ "$TOOL" = "frida" ]; then
+      log INFO "TOOL is frida"
+      run_frida
+   elif [ "$TOOL" = "frida-python" ]; then
+      log INFO "TOOL is frida-python"
+      run_frida_python
+   else
+       log INFO "TOOL is unknown"
+   fi
+
+}
+
+
+main
+

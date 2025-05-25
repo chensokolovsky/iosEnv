@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# To run this script as soon as the docker is running, before interactive shell.
+# This needs to be done in order to use information from a shared folder between the host and the container.
+# When performing the docker build actions (from the docker file) the connection between the folder does not exist yet
+
+source "/env/logger.sh"
+
+log INFO "docker initialization script started"
+
+# setting up ssh auth and known hosts for promptless communication
+# see guide in docs/environment structure
+log INFO "copying ssh keys"
+mkdir /root/.ssh
+cp /projects/secrets/id_rsa /root/.ssh/
+cp /projects/secrets/known_hosts /root/.ssh
+
+
+# move the patched library from env to its location in the container
+# to read more about it search docs for lldb patching
+log INFO "copying patched lldb and creating symlinks"
+mv /env/liblldb-14.so.1_patched /usr/lib/aarch64-linux-gnu/liblldb-14.so.1
+
+ln -s /usr/bin/lldb-14 /usr/bin/lldb
+
+
+# Create alias for easy ssh to the JB device
+# Get the conf file
+log INFO "creating aliases"
+source "./config.cfg"
+echo "alias myssh='ssh -p $DOCKER_PORT_SSH $SSH_USER@host.docker.internal'" >> ~/.bashrc
+echo "alias myfrida='frida -H host.docker.internal:$DOCKER_PORT_FRIDA'" >> ~/.bashrc
+source ~/.bashrc

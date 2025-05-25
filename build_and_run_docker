@@ -1,0 +1,19 @@
+#!/bin/bash
+
+source "./config.cfg"
+
+./set_up_ports
+
+docker build -f ./docker/Dockerfile -t research:research .
+
+# if you need to rebuild all layers
+#docker build --no-cache -f ./docker/Dockerfile -t research:research .
+
+docker run  -i \
+-v $PROJECTS_FOLDER:/projects \
+-v $DEVELOPER_FOLDER:/root/Library/Developer/ \
+-v /Applications/Xcode.app/:/Applications/Xcode.app/ \
+-v $SCRIPTS_FOLDER:/env/scripts/ \
+-t research:research \
+bash -c "./init && bash"
+

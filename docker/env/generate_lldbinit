@@ -1,0 +1,44 @@
+#!/bin/bash
+
+
+# This script generates a tailored lldb init script according to the different configurations
+# The main configuration (congif.cfg) contains the communication ports that should be used from the docker lldb client
+# The specific app configuration contains the script name to import that fits the application/executable in hand
+
+
+
+# pseudo:
+# crete the lldb file
+# import needed scripts
+# select platform
+# connect to lldb server according to the provided port
+
+# Usage:
+# $ ./generate_lldbinit path port app_script
+
+
+source /env/config.cfg
+
+lldbinit_path=$1
+connection_port=$2
+lldb_script=$3
+
+log INFO "Generating lldbinit file at $lldbinit_path"
+
+
+# session init
+echo "platform select remote-ios" >> $lldbinit_path
+echo "process connect connect://host.docker.internal:$connection_port" >> $lldbinit_path
+
+# generic scripts import
+for item in "${LLDB_SCRIPTS[@]}"; do
+  echo "command script import /env/scripts/lldb/$item" >> $lldbinit_path
+done
+
+
+# specific script import
+echo "command script import $lldb_script" >> $lldbinit_path
+
+
+
+
