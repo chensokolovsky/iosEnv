@@ -46,7 +46,7 @@ This is a very important step since the docker relies on specific folder structu
 The reason is to separate this public repo from your private projects and scripts   
 
 ### First step
-Read the [blog post](https://chensokolovsky.github.io/FuzzerAmoreBlog/posts/ios_research_docker_env.html)   
+Read the [blog post](https://chensokolovsky.github.io/FuzzerAmoreBlog/posts/ios_research_docker_env.html). It will help you understand many of the concepts and answer the "why"   
 
 
 ### Setup your host folder structures
@@ -98,7 +98,12 @@ will save you the trouble of writing ```# ssh -p 4000 mobile@host.docker.interna
 
 ### Troubleshooting  
 On the host mac, you may need to approve some of the folders you are sharing with the container.  
-Open Settings in the Docker Desktop GUI and allow access to the needed folders (projects, xcode, scripts)
+Open Settings in the Docker Desktop GUI and allow access to the needed folders (projects, xcode, scripts)   
+
+When using Frida, in most cases it is mandatory for the client version to be the same major version as the server version on the device. Change the Dockerfile to the frida-tools version that matches your server (note that frida-tools version != frida client version).   
+Note that this is not the case with lldb, and that lldb we are using here is patched, so it is not recommended to change the lldb client version (much easier to change the debugserver version on the device in this case, plus, mismatching versions between client and server tend to work in lldb anyhow)
+
+
 
 
 ## License
