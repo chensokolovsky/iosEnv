@@ -1,6 +1,6 @@
 ## General
-iosEnv is a docker container for ios debugging and research
-The idea is to move a mac research setup, script it and dockerise it  
+iosEnv is a docker container for ios debugging and research.   
+The idea is to move a mac research setup, which is connected to a physical device, script it, and dockerise it.  
 It contains a quick setup for the following CLI tools 
 - ssh    
 - frida  
@@ -13,8 +13,9 @@ It contains a quick setup for the following CLI tools
 dockerfile is [here](./docker/Dockerfile)
 
 
-## Goal
-once everything is properly set up, you just need the following two lines:
+## What does it do?
+You need a mac and a JB device.   
+Once everything is properly set up, you just need the following two lines:
 
 To build   
 ```
