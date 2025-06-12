@@ -21,13 +21,13 @@ To build
 ```
 $ ./build_and_run_docker
 ```
-This ^ will also setup the needed ports   
+This ^ will also setup the needed ports on the host  
 and once inside the container   
 ```
 # ./debug
 ```
 
-and this should: set up ports, build the container, copy the needed secrets for passwordless interaction with a jailbroken physical device, copy the needed scripts, ssh into the device, look for the PID you want to hook/debug, run the tool you select (lldb/frida), connect the client to the server and the process, load and run the script   
+and together these should: set up ports, build the container, copy the needed secrets for passwordless interaction with a jailbroken physical device, copy the needed scripts, run the container, ssh into the device, look for the PID you want to hook/debug, run the tool you select (lldb/frida), connect the client to the server and the process, load and run the your script(s).   
 
 
 ## Terminology
@@ -59,6 +59,8 @@ Needed folders (you can name them however you want, but just to understand their
 **secrets** - a folder inside the projects folder that contains private key pairs and known hosts files for seemlessly connecting the container to the device (ssh, scp) without the need to enter the password manually  
 
 **run.cfg** - a main config file that is located in the projects folder. It points to the current project folder (within the projects folder), the current configuration to run, and device related information. The contents of this file should change when you change projects, change a device, or change a research tool. Example: when working with lldb on a binary and wanting to switch to frida, while keeping the lldb configuration for later use  
+
+**scripts** - generic scripts that you usually want to load for every research, such as lldb helper functions, your custom commands, Frida scripts, etc.
 
 Folders:  
 ```
